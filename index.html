@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>译林六上 · 英语刷题与错题本</title>
+<!--
+  译林版（2026 新版）小学六年级英语 · 刷题与错题整理平台
+  纯原生 HTML + CSS + JS，无框架、无外链，双击即可运行
+  数据全部存在浏览器 localStorage，不需要服务器
+  代码里的中文注释是给后来改这个文件的人看的，改颜色改文案先看 :root 变量
+-->
+<style>
+/* ============ 设计变量：想换配色只改这一段 ============ */
+:root{
+  --bg:#eef8f8;          /* 页面底色：淡薄荷 */
+  --card:#ffffff;        /* 卡片 */
+  --ink:#0d2b2d;         /* 主文字 */
+  --ink2:#31565a;        /* 次级文字 */
+  --muted:#6d8f92;       /* 辅助文字 */
+  --line:#d5eaea;        /* 描边 */
+  --line2:#e9f4f4;       /* 浅描边 */
+  --pri:#0f9e97;         /* 主色：蓝绿 */
+  --pri-d:#0b7a74;
+  --pri-s:#e2f6f4;       /* 主色淡底 */
+  --blue:#2f86d8;        /* 辅色：亮蓝 */
+  --blue-s:#e7f1fc;
+  --ok:#16a34a; --ok-s:#e8f7ed;
+  --bad:#e2483c; --bad-s:#fdecea;
+  --warn:#e79a12; --warn-s:#fdf3e0;
+  --r:16px; --r-sm:10px;
+  --sans:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono",Consolas,ui-monospace,monospace;
+  --shadow:0 2px 0 rgba(13,43,45,.03), 0 10px 24px -18px rgba(13,43,45,.5);
+}
+*{box-sizing:border-box}
+/* hidden 必须压得住所有 display 声明，否则 .btn / .shell 会把 hidden 覆盖掉 */
+[hidden]{display:none !important}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--sans);
+  font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+}
+button{font:inherit; color:inherit; cursor:pointer}
+h1,h2,h3,h4{margin:0; line-height:1.35}
+:focus-visible{outline:3px solid var(--blue); outline-offset:2px; border-radius:8px}
+
+/* ============ 登录页 ============ */
+.login{
+  position:fixed; inset:0; z-index:200; display:grid; place-items:center; padding:20px;
+  background:
+    radial-gradient(circle at 12% 8%, #d7f2ef 0, transparent 42%),
+    radial-gradient(circle at 88% 92%, #dcebfb 0, transparent 40%),
+    var(--bg);
+}
+.login[hidden]{display:none}
+.login-card{
+  width:min(430px,100%); background:var(--card); border-radius:22px; padding:30px 26px;
+  border:1px solid var(--line); box-shadow:0 24px 60px -40px rgba(13,43,45,.7);
+}
+.login-card .mark{
+  width:52px; height:52px; border-radius:16px; background:var(--pri); color:#fff;
+  display:grid; place-items:center; font-family:var(--mono); font-size:14px; letter-spacing:.08em;
+  margin-bottom:16px;
+}
+.login-card h1{font-size:23px; letter-spacing:.01em}
+.login-card .sub{margin:6px 0 22px; color:var(--muted); font-size:13.5px}
+.field{margin-bottom:14px}
+.field label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px; letter-spacing:.06em}
+.field input,.field select{
+  width:100%; padding:12px 13px; min-height:48px; font:inherit; color:var(--ink);
+  background:#fbfefe; border:1px solid var(--line); border-radius:12px;
+}
+.field input:focus,.field select:focus{outline:none; border-color:var(--pri); box-shadow:0 0 0 4px var(--pri-s)}
+.login-note{margin:16px 0 0; font-size:11.5px; color:var(--muted); line-height:1.7}
+.login-note b{color:var(--ink2)}
+
+/* ============ 外壳：侧栏 + 内容 ============ */
+.shell{display:grid; grid-template-columns:232px minmax(0,1fr); min-height:100vh}
+.rail{
+  position:sticky; top:0; height:100vh; padding:22px 14px;
+  background:var(--card); border-right:1px solid var(--line);
+  display:flex; flex-direction:column; gap:6px;
+}
+.rail .logo{display:flex; align-items:center; gap:10px; padding:4px 8px 18px}
+.rail .logo i{
+  width:36px; height:36px; border-radius:11px; background:var(--pri); color:#fff; font-style:normal;
+  display:grid; place-items:center; font-family:var(--mono); font-size:11px;
+}
+.rail .logo b{font-size:14.5px; display:block}
+.rail .logo span{font-size:11px; color:var(--muted)}
+.nav-item{
+  display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+  border:0; background:transparent; padding:11px 12px; min-height:46px; border-radius:11px;
+  color:var(--ink2); font-size:14.5px;
+}
+.nav-item:hover{background:#f2faf9}
+.nav-item[aria-current="true"]{background:var(--pri-s); color:var(--pri-d); font-weight:600}
+.nav-item .dot{
+  width:24px; height:24px; border-radius:8px; display:grid; place-items:center;
+  background:#f0f8f7; font-family:var(--mono); font-size:11px; color:var(--muted)
+}
+.nav-item[aria-current="true"] .dot{background:var(--pri); color:#fff}
+.rail .foot{margin-top:auto; padding:12px 10px 0; border-top:1px solid var(--line2); font-size:12px; color:var(--muted)}
+.rail .foot b{display:block; color:var(--ink); font-size:13.5px}
+
+main{min-width:0; padding:0 0 90px}
+.topbar{
+  position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:12px;
+  padding:14px 22px; background:rgba(238,248,248,.92); backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--line2);
+}
+.topbar h2{font-size:17px}
+.topbar .sub{font-size:12px; color:var(--muted)}
+.spacer{flex:1}
+.uchip{
+  display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line);
+  border-radius:999px; padding:5px 5px 5px 13px; font-size:13px;
+}
+.uchip b{font-weight:600}
+.uchip em{font-style:normal; color:var(--muted); font-family:var(--mono); font-size:11px}
+
+/* 手机底部导航 */
+.tabbar{display:none}
+@media (max-width:900px){
+  .shell{grid-template-columns:1fr}
+  .rail{display:none}
+  .topbar{padding:12px 14px}
+  .tabbar{
+    display:flex; position:fixed; left:0; right:0; bottom:0; z-index:30;
+    background:var(--card); border-top:1px solid var(--line);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  .tabbar button{
+    flex:1; border:0; background:transparent; padding:6px 2px; min-height:52px;
+    font-size:11px; color:var(--muted); display:flex; flex-direction:column; align-items:center; gap:3px;
+  }
+  .tabbar button .dot{width:26px;height:26px;border-radius:9px;background:#f0f8f7;display:grid;place-items:center;font-family:var(--mono);font-size:11px}
+  .tabbar button[aria-current="true"]{color:var(--pri-d); font-weight:600}
+  .tabbar button[aria-current="true"] .dot{background:var(--pri); color:#fff}
+}
+
+.wrap{padding:22px; max-width:1080px}
+@media (max-width:900px){ .wrap{padding:16px 14px} }
+
+/* ============ 通用块 ============ */
+.view{display:none}
+.view.on{display:block; animation:pop .18s ease-out both}
+@keyframes pop{from{opacity:0; transform:translateY(5px)} to{opacity:1; transform:none}}
+@media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important} }
+
+.lede{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:16px}
+.lede h3{font-size:19px}
+.lede p{margin:0; color:var(--muted); font-size:13px}
+.lede .spacer{flex:1}
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:7px;
+  border:1px solid var(--pri); background:var(--pri); color:#fff; font-weight:600;
+  padding:12px 18px; min-height:46px; border-radius:12px; font-size:15px;
+}
+.btn:hover{background:var(--pri-d); border-color:var(--pri-d)}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:var(--card); color:var(--ink); border-color:var(--line); font-weight:500}
+.btn.ghost:hover{background:#f4fbfa; border-color:#b9dcd9}
+.btn.blue{background:var(--blue); border-color:var(--blue)}
+.btn.sm{padding:8px 12px; min-height:38px; font-size:13px; border-radius:10px}
+.btn[disabled]{opacity:.45; cursor:not-allowed}
+
+.card{background:var(--card); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow)}
+.pad{padding:18px}
+
+.grid{display:grid; gap:12px; grid-template-columns:repeat(auto-fill,minmax(248px,1fr))}
+.topic{
+  text-align:left; background:var(--card); border:1px solid var(--line); border-radius:var(--r);
+  padding:18px; min-height:132px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:6px;
+}
+.topic:hover{border-color:#b6dedb; transform:translateY(-1px)}
+.topic .tno{font-family:var(--mono); font-size:11px; color:var(--pri); letter-spacing:.1em}
+.topic h4{font-size:16.5px}
+.topic p{margin:0; font-size:12.5px; color:var(--muted); line-height:1.55}
+.topic .meta{margin-top:auto; display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted)}
+.topic .rate{margin-left:auto; font-family:var(--mono); font-size:12px; color:var(--pri-d)}
+.topic .prog{height:4px; border-radius:99px; background:var(--line2); overflow:hidden}
+.topic .prog i{display:block; height:100%; background:var(--pri)}
+
+/* ============ 做题 ============ */
+.qhead{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px}
+.crumb{font-family:var(--mono); font-size:12px; color:var(--muted)}
+.chip{
+  font-size:12px; padding:3px 10px; border-radius:999px; background:var(--pri-s);
+  color:var(--pri-d); border:1px solid #c9e9e6;
+}
+.chip.blue{background:var(--blue-s); color:#1d63a8; border-color:#cfe3f8}
+.timer{
+  margin-left:auto; font-family:var(--mono); font-size:15px; font-weight:600; color:var(--ink2);
+  background:var(--card); border:1px solid var(--line); border-radius:999px; padding:5px 13px;
+}
+.timer.warn{color:var(--bad); border-color:#f3c9c4; background:var(--bad-s)}
+
+.qbar{height:5px; background:var(--line2); border-radius:99px; overflow:hidden; margin-bottom:16px}
+.qbar i{display:block; height:100%; width:0; background:var(--pri); transition:width .25s ease}
+
+.qcard{background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:22px; box-shadow:var(--shadow)}
+.stem{
+  font-size:20px; line-height:1.65; margin:0 0 18px; white-space:pre-line;
+  letter-spacing:.01em; text-wrap:pretty;
+}
+.stem .bk{color:var(--pri); letter-spacing:1px}
+
+.opts{display:flex; flex-direction:column; gap:9px}
+.opt{
+  display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+  background:#fbfefe; border:1.5px solid var(--line); border-radius:12px;
+  padding:13px 14px; min-height:52px; font-size:16.5px; transition:border-color .12s, background .12s;
+}
+.opt:hover{border-color:#b6dedb; background:#f6fcfb}
+.opt .k{
+  font-family:var(--mono); font-size:13px; width:28px; height:28px; flex:0 0 28px;
+  display:grid; place-items:center; border-radius:8px; background:#eef6f5; color:var(--ink2);
+}
+.opt[aria-checked="true"]{border-color:var(--pri); background:var(--pri-s)}
+.opt[aria-checked="true"] .k{background:var(--pri); color:#fff}
+.opt.good{border-color:var(--ok); background:var(--ok-s)}
+.opt.good .k{background:var(--ok); color:#fff}
+.opt.bad{border-color:var(--bad); background:var(--bad-s)}
+.opt.bad .k{background:var(--bad); color:#fff}
+.opt[disabled]{cursor:default}
+
+.fillrow{display:flex; flex-wrap:wrap; align-items:center; gap:10px}
+.fillrow input{
+  flex:1 1 240px; min-width:180px; font-size:20px; padding:12px 6px; min-height:50px;
+  background:transparent; border:0; border-bottom:2.5px solid var(--line); color:var(--ink);
+}
+.fillrow input:focus{outline:none; border-bottom-color:var(--pri)}
+.fillrow input.good{border-bottom-color:var(--ok)}
+.fillrow input.bad{border-bottom-color:var(--bad)}
+.fillrow .note{font-size:12px; color:var(--muted)}
+
+/* 虚拟键盘 */
+.kb{margin-top:14px; background:#f5fbfa; border:1px solid var(--line); border-radius:12px; padding:8px}
+.kb[hidden]{display:none}
+.krow{display:flex; gap:5px; justify-content:center; margin-bottom:5px}
+.krow:last-child{margin-bottom:0}
+.key{
+  flex:1 1 0; max-width:52px; min-height:44px; border:1px solid var(--line); background:#fff;
+  border-radius:9px; font-family:var(--mono); font-size:15px; color:var(--ink);
+}
+.key:active{background:var(--pri-s)}
+.key.wide{max-width:88px; font-size:13px; font-family:var(--sans)}
+
+.acts{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:20px}
+.verdict{font-weight:700; font-size:15.5px}
+.verdict.ok{color:var(--ok)}
+.verdict.no{color:var(--bad)}
+
+/* 解析折叠面板 */
+details.exp{margin-top:18px; border-top:1px solid var(--line2); padding-top:6px}
+details.exp summary{
+  cursor:pointer; list-style:none; padding:10px 0; min-height:44px; display:flex; align-items:center; gap:8px;
+  font-size:14px; color:var(--pri-d); font-weight:600;
+}
+details.exp summary::-webkit-details-marker{display:none}
+details.exp summary::before{content:"+"; font-family:var(--mono); width:20px}
+details.exp[open] summary::before{content:"–"}
+.xrow{display:grid; grid-template-columns:76px 1fr; gap:12px; padding:10px 0; border-bottom:1px dashed var(--line2)}
+.xrow:last-child{border-bottom:0}
+.xrow dt{font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; color:var(--muted); padding-top:4px}
+.xrow dd{margin:0; font-size:14.5px; line-height:1.7; color:var(--ink2)}
+.xrow dd.big{font-size:18px; font-weight:600; color:var(--ok)}
+.xrow dd.big.no{color:var(--bad)}
+.kcard{background:var(--blue-s); border:1px solid #cfe3f8; border-radius:12px; padding:12px 14px; font-size:14px; color:#1a4c7d; line-height:1.7}
+@media (max-width:640px){ .xrow{grid-template-columns:1fr; gap:2px} .xrow dt{padding-top:0} }
+/* 手机端顶栏收紧：说明文字太多会把昵称挤成两行 */
+@media (max-width:520px){
+  .topbar .sub{display:none}
+  .topbar h2{font-size:15.5px}
+  .uchip{padding:3px 3px 3px 10px; gap:6px; font-size:12.5px}
+  .uchip b{max-width:84px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .uchip em{font-size:10.5px}
+  .uchip .btn{padding:7px 10px; min-height:36px; font-size:12.5px}
+  .stem{font-size:18.5px}
+}
+
+
+/* ============ 结果页 ============ */
+.result{text-align:center; padding:30px 20px}
+.result .big{font-family:var(--mono); font-size:44px; font-weight:700; color:var(--pri-d); line-height:1.1}
+.result .lbl{color:var(--muted); font-size:13px; margin-top:4px}
+.result .stars{font-size:22px; letter-spacing:4px; color:var(--warn); margin:10px 0 4px}
+.result .stars .off{color:#e3e9e9}
+.result .acts{justify-content:center; margin-top:22px}
+
+/* ============ 列表 / 错题 ============ */
+.group{border:1px solid var(--line); border-radius:var(--r); background:var(--card); margin-bottom:10px; overflow:hidden; box-shadow:var(--shadow)}
+.group>summary{
+  display:flex; align-items:center; gap:10px; padding:15px 16px; min-height:56px;
+  cursor:pointer; list-style:none; font-weight:600; font-size:15px; color:var(--ink);
+}
+.group>summary::-webkit-details-marker{display:none}
+.group>summary .n{margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--muted)}
+.group[open]>summary{border-bottom:1px solid var(--line2)}
+.gbody{padding:4px 16px 16px}
+.eitem{padding:14px 0; border-bottom:1px dashed var(--line2)}
+.eitem:last-child{border-bottom:0}
+.eitem .q{font-size:15.5px; margin:0 0 6px; white-space:pre-line}
+.eitem .line{font-size:13px; color:var(--muted)}
+.eitem .line b{color:var(--bad); font-weight:600}
+.eitem .line i{color:var(--ok); font-style:normal; font-weight:600}
+.eitem .why{margin-top:4px; font-size:13.5px; color:var(--ink2)}
+
+.empty{
+  border:1.5px dashed var(--line); border-radius:var(--r); background:var(--card);
+  padding:34px 20px; text-align:center; color:var(--muted); font-size:14px; line-height:1.8;
+}
+
+/* ============ 表格 ============ */
+table{width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:var(--r); overflow:hidden}
+th,td{padding:12px 14px; text-align:left; border-bottom:1px solid var(--line2); font-size:14.5px}
+th{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; color:var(--muted); font-weight:500}
+tr:last-child td{border-bottom:0}
+td.num{font-family:var(--mono); font-size:13.5px}
+.rank{font-family:var(--mono); font-size:13px; color:var(--muted); width:46px}
+.rank.top{color:var(--pri-d); font-weight:700}
+.seg{display:flex; gap:6px; background:#eaf5f4; padding:4px; border-radius:12px; margin-bottom:14px; width:max-content; max-width:100%; overflow:auto}
+.seg button{border:0; background:transparent; padding:9px 14px; min-height:40px; border-radius:9px; font-size:13.5px; color:var(--ink2)}
+.seg button[aria-selected="true"]{background:var(--card); color:var(--pri-d); font-weight:600; box-shadow:0 1px 4px rgba(13,43,45,.08)}
+
+/* ============ 手册 ============ */
+.hb{margin-bottom:10px; border:1px solid var(--line); border-radius:var(--r); background:var(--card); overflow:hidden}
+.hb summary{
+  display:flex; align-items:center; gap:10px; padding:16px; min-height:58px; cursor:pointer;
+  list-style:none; font-weight:600; font-size:15.5px;
+}
+.hb summary::-webkit-details-marker{display:none}
+.hb summary .tag{margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--muted)}
+.hb summary::before{content:"▸"; color:var(--pri); font-size:13px}
+.hb[open] summary::before{content:"▾"}
+.hb[open] summary{border-bottom:1px solid var(--line2); background:#fafdfd}
+.hbbody{padding:16px}
+.hbbody p{margin:0 0 10px; font-size:14.5px; line-height:1.75; color:var(--ink2)}
+.hbbody .fml{
+  background:var(--pri-s); border-left:4px solid var(--pri); border-radius:8px;
+  padding:10px 13px; font-family:var(--mono); font-size:13.5px; color:var(--pri-d); margin:0 0 12px;
+  overflow-x:auto;
+}
+.hbbody .ex{font-size:14px; color:var(--ink2); margin:0 0 6px}
+.hbbody .ex b{color:var(--ink)}
+.hbbody .trap{font-size:13.5px; color:var(--bad); background:var(--bad-s); border-radius:8px; padding:9px 12px; margin-top:10px}
+.hbbody table{margin-top:6px}
+
+/* ============ 我的 / 统计 ============ */
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:16px}
+.stat{background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:16px; box-shadow:var(--shadow)}
+.stat .v{font-family:var(--mono); font-size:26px; font-weight:700; color:var(--pri-d); line-height:1.2}
+.stat .k{font-size:12px; color:var(--muted); margin-top:2px}
+.hist{max-height:420px; overflow:auto; border:1px solid var(--line); border-radius:var(--r); background:var(--card)}
+.hrow{display:flex; align-items:center; gap:10px; padding:11px 14px; border-bottom:1px solid var(--line2); font-size:13.5px}
+.hrow:last-child{border-bottom:0}
+.hrow .ok{width:20px; height:20px; border-radius:6px; display:grid; place-items:center; font-size:11px; color:#fff; flex:0 0 20px}
+.hrow .ok.y{background:var(--ok)} .hrow .ok.n{background:var(--bad)}
+.hrow .t{color:var(--muted); font-family:var(--mono); font-size:11.5px; margin-left:auto}
+
+textarea{
+  width:100%; min-height:150px; padding:12px; font-family:var(--mono); font-size:12.5px;
+  border:1px solid var(--line); border-radius:12px; background:#fbfefe; color:var(--ink2); line-height:1.6;
+}
+textarea:focus{outline:none; border-color:var(--pri); box-shadow:0 0 0 4px var(--pri-s)}
+
+/* ============ 提示条 ============ */
+.toast{
+  position:fixed; left:50%; bottom:calc(76px + env(safe-area-inset-bottom));
+  transform:translate(-50%,10px); background:var(--ink); color:#fff; padding:11px 18px;
+  border-radius:999px; font-size:13.5px; opacity:0; pointer-events:none; z-index:120;
+  transition:opacity .16s, transform .16s; max-width:88vw; text-align:center;
+}
+.toast.on{opacity:1; transform:translate(-50%,0)}
+@media (min-width:901px){ .toast{bottom:28px} }
+</style>
+</head>
+<body>
+
+<!-- ================= 登录页 ================= -->
+<div class="login" id="login">
+  <form class="login-card" id="loginForm" autocomplete="off">
+    <div class="mark">YL6</div>
+    <h1>译林六年级 · 英语闯关</h1>
+    <p class="sub">六上 / 六下核心语法 · 刷题、错题、变式一页搞定</p>
+    <div class="field">
+      <label>昵称</label>
+      <input id="lgName" maxlength="12" placeholder="例如：王小明" autocapitalize="off" spellcheck="false">
+    </div>
+    <div class="field">
+      <label>班级</label>
+      <select id="lgClass">
+        <option>六(1)</option>
+        <option selected>六(3)</option>
+        <option>六(5)</option>
+        <option>六(7)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>访问码</label>
+      <input id="lgCode" maxlength="8" placeholder="老师给的 4 位码" autocapitalize="characters" spellcheck="false">
+    </div>
+    <button class="btn" style="width:100%" type="submit">开始刷题</button>
+    <p class="login-note">
+      所有记录只存在<b>这台电脑的浏览器里</b>（localStorage），没有服务器，也不会上传。
+      换电脑、清缓存都会丢，重要成绩请用「我的 → 导出数据」备份。
+    </p>
+  </form>
+</div>
+
+<!-- ================= 应用外壳 ================= -->
+<div class="shell" id="app" hidden>
+  <aside class="rail">
+    <div class="logo">
+      <i>YL6</i>
+      <div><b>英语闯关</b><span>译林六上 · 六下</span></div>
+    </div>
+    <button class="nav-item" data-view="practice" aria-current="true"><span class="dot">01</span>专题刷题</button>
+    <button class="nav-item" data-view="wrong"><span class="dot">02</span>错题整理</button>
+    <button class="nav-item" data-view="variant"><span class="dot">03</span>举一反三</button>
+    <button class="nav-item" data-view="handbook"><span class="dot">04</span>语法手册</button>
+    <button class="nav-item" data-view="board"><span class="dot">05</span>排行榜</button>
+    <button class="nav-item" data-view="me"><span class="dot">06</span>个人中心</button>
+    <div class="foot">
+      <b id="railName">—</b>
+      <span id="railCls">—</span>
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <h2 id="pageTitle">专题刷题</h2>
+        <div class="sub" id="pageSub">选一个考点开始，做完自动进错题本</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="uchip">
+        <b id="uName">—</b><em id="uCls"></em>
+        <button class="btn ghost sm" id="logoutBtn" type="button">退出</button>
+      </div>
+    </div>
+
+    <!-- 1. 专题刷题 -->
+    <section class="view on" id="v-practice"><div class="wrap">
+      <div class="lede">
+        <h3>选一个考点</h3>
+        <p id="bankInfo"></p>
+        <span class="spacer"></span>
+        <button class="btn ghost sm" id="importBankBtn" type="button">导入题库 JSON</button>
+        <button class="btn blue sm" id="pkBtn" type="button">PK 挑战 60 秒</button>
+      </div>
+      <div class="grid" id="topicGrid"></div>
+      <div class="card pad" id="importBankBox" style="margin-top:16px" hidden>
+        <p style="margin:0 0 8px;font-size:14px">把 Hermes 生成的题库 JSON 粘进来（支持 <code>{items:[...]}</code> 或数组），导入后会作为「我的题库」出现在上面。</p>
+        <textarea id="bankJson" placeholder='{"schema":"yl6.item/1","items":[{"type":"choice","stem":"...","options":{"A":"...","B":"...","C":"...","D":"..."},"answer":"C","point":"...","why":"...","know":"..."}]}'></textarea>
+        <div class="acts">
+          <button class="btn" id="doImportBank" type="button">导入并开始</button>
+          <button class="btn ghost" id="cancelImportBank" type="button">取消</button>
+        </div>
+      </div>
+    </div></section>
+
+    <!-- 2. 做题（所有模式共用） -->
+    <section class="view" id="v-quiz"><div class="wrap">
+      <div class="qhead">
+        <button class="btn ghost sm" id="quitBtn" type="button">← 退出</button>
+        <span class="crumb" id="qCrumb"></span>
+        <span class="chip" id="qTag"></span>
+        <span class="chip blue" id="qType"></span>
+        <span class="timer" id="qTimer">00:00</span>
+      </div>
+      <div class="qbar"><i id="qBar"></i></div>
+
+      <div class="qcard" id="qCard">
+        <p class="stem" id="qStem"></p>
+        <div class="opts" id="qOpts" role="radiogroup"></div>
+        <div class="kb" id="kb" hidden></div>
+        <div class="acts">
+          <button class="btn" id="submitBtn" type="button">提交答案</button>
+          <button class="btn ghost" id="kbBtn" type="button" hidden>英文键盘</button>
+          <button class="btn" id="nextBtn" type="button" hidden>下一题 →</button>
+          <span class="verdict" id="verdict"></span>
+        </div>
+
+        <details class="exp" id="exp">
+          <summary>查看解析与知识点</summary>
+          <div class="xrow"><dt>答案</dt><dd class="big" id="xAns"></dd></div>
+          <div class="xrow"><dt>考点</dt><dd id="xPoint"></dd></div>
+          <div class="xrow"><dt>为什么</dt><dd id="xWhy"></dd></div>
+          <div class="xrow"><dt>知识点</dt><dd><div class="kcard" id="xKnow"></div></dd></div>
+        </details>
+      </div>
+
+      <!-- 结果 -->
+      <div class="card result" id="result" hidden>
+        <div class="big" id="rBig">0%</div>
+        <div class="lbl" id="rLbl">正确率</div>
+        <div class="stars" id="rStars"></div>
+        <p style="color:var(--muted);font-size:13px" id="rExtra"></p>
+        <div class="acts">
+          <button class="btn" id="rAgain" type="button">再来一组</button>
+          <button class="btn ghost" id="rRedoWrong" type="button">重做错题</button>
+          <button class="btn ghost" id="rHome" type="button">回到专题</button>
+        </div>
+      </div>
+    </div></section>
+
+    <!-- 3. 错题整理 -->
+    <section class="view" id="v-wrong"><div class="wrap">
+      <div class="lede">
+        <p>按考点自动分组，答错的进来，答对一次就移出。</p>
+        <span class="spacer"></span>
+        <button class="btn ghost sm" id="redoAllWrong" type="button">重做全部</button>
+        <button class="btn ghost sm" id="exportWrong" type="button">导出错题文本</button>
+      </div>
+      <div id="wrongList"></div>
+    </div></section>
+
+    <!-- 4. 举一反三 -->
+    <section class="view" id="v-variant"><div class="wrap">
+      <div class="lede">
+        <p>把 Hermes 生成的变式题 JSON 粘进来，同考点再练三题。</p>
+      </div>
+      <div class="card pad">
+        <textarea id="variantJson" placeholder='{"schema":"yl6.variant/1","variants":[{"type":"choice","stem":"...","options":{"A":"..."},"answer":"A","point":"...","why":"...","know":"..."}]}'></textarea>
+        <div class="acts">
+          <button class="btn" id="doVariant" type="button">导入并开始训练</button>
+          <button class="btn ghost" id="sampleVariant" type="button">先看一个示例</button>
+        </div>
+      </div>
+      <div class="card pad" style="margin-top:14px">
+        <p style="margin:0;font-size:13.5px;color:var(--muted);line-height:1.8">
+          格式要求：顶层有 <code>variants</code>（或 <code>items</code>）数组；每题至少要有
+          <code>stem</code>、<code>answer</code>；选择题再加 <code>options</code>（A–D）。
+          填空题给 <code>accept</code> 数组做容错，例如 <code>["didn't go","did not go"]</code>。
+        </p>
+      </div>
+    </div></section>
+
+    <!-- 5. 语法手册 -->
+    <section class="view" id="v-handbook"><div class="wrap">
+      <div class="lede"><p>点开就是公式 + 例句 + 最容易错的地方。</p></div>
+      <div id="handbook"></div>
+    </div></section>
+
+    <!-- 6. 排行榜 -->
+    <section class="view" id="v-board"><div class="wrap">
+      <div class="lede"><p>数据来自这台设备上登录过的人，不是全班真实成绩。</p></div>
+      <div class="seg" id="boardSeg">
+        <button data-b="acc" aria-selected="true">正确率</button>
+        <button data-b="count" aria-selected="false">完成题数</button>
+        <button data-b="pk" aria-selected="false">PK 得分</button>
+      </div>
+      <div id="boardBody"></div>
+    </div></section>
+
+    <!-- 7. 个人中心 -->
+    <section class="view" id="v-me"><div class="wrap">
+      <div class="lede"><p id="meSub"></p></div>
+      <div class="stats" id="meStats"></div>
+      <div class="lede" style="margin-top:20px"><h3>最近做题</h3><p>最多显示 40 条</p></div>
+      <div class="hist" id="meHist"></div>
+      <div class="acts" style="margin-top:16px">
+        <button class="btn ghost" id="exportAll" type="button">导出全部数据 JSON</button>
+        <button class="btn ghost" id="clearMe" type="button">清空我的记录</button>
+      </div>
+    </div></section>
+  </main>
+
+  <nav class="tabbar" id="tabbar">
+    <button data-view="practice" aria-current="true"><span class="dot">01</span>刷题</button>
+    <button data-view="wrong"><span class="dot">02</span>错题</button>
+    <button data-view="variant"><span class="dot">03</span>变式</button>
+    <button data-view="handbook"><span class="dot">04</span>手册</button>
+    <button data-view="board"><span class="dot">05</span>榜</button>
+    <button data-view="me"><span class="dot">06</span>我的</button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 题库数据（构建时注入；也可以直接改这里的内容） -->
+<script id="bank" type="application/json">{"schema":"yl6.item/2","meta":{"grade":"六上 · 六下","units":"Unit 2–3 单元卷 + 语法包","count":40,"topics":[{"id":"past","name":"一般过去时","desc":"过去式、didn't、Did 提问、was/were 与 be born","tag_cn":"一般过去时"},{"id":"verbpat","name":"to do / doing","desc":"want to do、enjoy doing、be good at doing","tag_cn":"动词搭配"},{"id":"wordfam","name":"词族变形","desc":"名 / 形 / 副 / 动 四类互变","tag_cn":"词族变形"},{"id":"ordinal","name":"序数词","desc":"日期、楼层、第几，the + 序数词","tag_cn":"序数词"},{"id":"whq","name":"特殊疑问句","desc":"疑问词怎么选，语序怎么排","tag_cn":"特殊疑问句"},{"id":"sva","name":"主谓一致","desc":"不定代词作主语用单数，there be 就近","tag_cn":"主谓一致"}]},"items":[{"id":"P01","topic":"past","tag":"past_form","tag_cn":"一般过去时","type":"choice","stem":"It ____ hard yesterday, so we stayed at home.","options":{"A":"rain","B":"rains","C":"rained","D":"raining"},"answer":"C","accept":[],"point":"一般过去时 · 规则动词加 -ed","why":"yesterday 说明事情发生在过去，rain 是规则动词，过去式直接加 -ed。","know":"规则变化：一般 +ed；以 e 结尾只 +d；辅音字母 + y 变 i 再 +ed；重读闭音节双写末尾字母。"},{"id":"P02","topic":"past","tag":"past_form","tag_cn":"一般过去时","type":"choice","stem":"Mike ____ his homework last night.","options":{"A":"do","B":"does","C":"did","D":"doing"},"answer":"C","accept":[],"point":"一般过去时 · 不规则动词","why":"last night 是过去时间；do 的过去式是不规则的 did，不能用 does。","know":"常考不规则：do-did, go-went, see-saw, have-had, eat-ate, come-came, get-got。"},{"id":"P03","topic":"past","tag":"past_form","tag_cn":"一般过去时","type":"choice","stem":"We ____ to the zoo two days ago.","options":{"A":"go","B":"goes","C":"went","D":"going"},"answer":"C","accept":[],"point":"一般过去时 · ago 句型","why":"two days ago 是过去时间状语，go 的过去式是 went。","know":"时间标志：yesterday / last night / ... ago / just now / in 2020。看到它们就选过去式。"},{"id":"P04","topic":"past","tag":"past_form","tag_cn":"一般过去时","type":"fill","stem":"My mother ____ (stop) the car and got out.","options":null,"answer":"stopped","accept":["stopped"],"point":"一般过去时 · 双写末尾字母","why":"后半句 got out 也是过去式，说明整句在过去；stop 是重读闭音节，要双写 p 再加 -ed。","know":"双写家族：stop-stopped, plan-planned, shop-shopped, drop-dropped。写成 stoped 是常见错。"},{"id":"P05","topic":"past","tag":"past_neg","tag_cn":"过去时否定","type":"choice","stem":"He didn't ____ to school yesterday.","options":{"A":"go","B":"went","C":"goes","D":"going"},"answer":"A","accept":[],"point":"didn't + 动词原形","why":"didn't 已经承担了过去时，后面的实义动词必须还原形 go。","know":"助动词 did 一个人管两件事：过去时 + 否定。所以后面不能再出现 went。"},{"id":"P06","topic":"past","tag":"past_yesno","tag_cn":"Did 疑问句","type":"choice","stem":"____ you ____ the film last night?","options":{"A":"Did / see","B":"Did / saw","C":"Do / see","D":"Were / see"},"answer":"A","accept":[],"point":"Did + 主语 + 动词原形","why":"last night 是过去时间，一般疑问句用 Did 开头，后面接原形 see。","know":"疑问语序：Did + 人 + 做什么?；答句 Yes, I did. / No, I didn't. 用 did，不用 was。"},{"id":"P07","topic":"past","tag":"past_yesno","tag_cn":"Did 疑问句","type":"choice","stem":"— Did Su Hai visit her grandma yesterday?\n— Yes, she ____.","options":{"A":"did","B":"does","C":"was","D":"is"},"answer":"A","accept":[],"point":"简答用 did","why":"问句用 Did 提问，肯定简答就答 Yes, she did. 不能用 was 或 does。","know":"简答三兄弟：Do→do/does；Did→did；Was/Were→was/were。问什么答什么。"},{"id":"P08","topic":"past","tag":"be_past","tag_cn":"was / were","type":"choice","stem":"There ____ a lot of rain last week.","options":{"A":"was","B":"were","C":"is","D":"are"},"answer":"A","accept":[],"point":"There be 过去时","why":"rain 是不可数名词，看作单数，过去时用 was；last week 提示过去。","know":"There was + 单数/不可数；There were + 复数。看后面名词，不看 there。"},{"id":"P09","topic":"past","tag":"be_born","tag_cn":"be born","type":"choice","stem":"My sister ____ born in 2015.","options":{"A":"is","B":"was","C":"were","D":"did"},"answer":"B","accept":[],"point":"be born 只用 was / were","why":"出生是过去的事，be born 的 be 只用 was 或 were；my sister 是单数，所以是 was。","know":"born 前面必须有 be：was born / were born。不能说 did born，也不能说 is born。"},{"id":"P10","topic":"past","tag":"be_born","tag_cn":"be born","type":"choice","stem":"— Where ____ you born?\n— In Nanjing.","options":{"A":"was","B":"were","C":"did","D":"are"},"answer":"B","accept":[],"point":"be born 的疑问句","why":"主语是 you，be born 用 were；疑问句把 were 提到前面。","know":"Where were you born? / When was he born? 这两句里都没有 did。"},{"id":"V01","topic":"verbpat","tag":"verb_pattern","tag_cn":"to do / doing","type":"choice","stem":"I want ____ football after school.","options":{"A":"play","B":"plays","C":"to play","D":"playing"},"answer":"C","accept":[],"point":"want + to do","why":"want 后面接不定式 to do，表示「想要做某事」。","know":"接 to do 的动词：want / hope / plan / learn / decide / need / would like。"},{"id":"V02","topic":"verbpat","tag":"verb_pattern","tag_cn":"to do / doing","type":"choice","stem":"She enjoys ____ storybooks before bed.","options":{"A":"read","B":"to read","C":"reads","D":"reading"},"answer":"D","accept":[],"point":"enjoy + doing","why":"enjoy 后面接动名词 doing，表示「喜欢做某事」。","know":"接 doing 的：enjoy / finish / mind / practice / keep / be good at。"},{"id":"V03","topic":"verbpat","tag":"verb_pattern","tag_cn":"to do / doing","type":"choice","stem":"They plan ____ the museum this Saturday.","options":{"A":"visit","B":"to visit","C":"visiting","D":"visits"},"answer":"B","accept":[],"point":"plan + to do","why":"plan 表示计划做某事，后面跟不定式 to visit；this Saturday 是将来时间。","know":"plan to do sth = 计划做某事。不要说 plan doing。"},{"id":"V04","topic":"verbpat","tag":"verb_pattern","tag_cn":"to do / doing","type":"fill","stem":"He finished ____ (do) his homework at eight.","options":null,"answer":"doing","accept":["doing"],"point":"finish + doing","why":"finish 后面必须接 doing，表示「做完某事」。","know":"finish doing / enjoy doing / practice doing。这几个动词后面都不接 to do。"},{"id":"V05","topic":"verbpat","tag":"verb_pattern","tag_cn":"to do / doing","type":"choice","stem":"Would you like ____ to my birthday party?","options":{"A":"come","B":"to come","C":"coming","D":"comes"},"answer":"B","accept":[],"point":"would like + to do","why":"would like 后面接 to do，表示「想要做某事」。","know":"would like to do sth；回答 Yes, I'd love to. 里的 to 不能丢。"},{"id":"V06","topic":"verbpat","tag":"verb_pattern","tag_cn":"to do / doing","type":"choice","stem":"My brother is good at ____.","options":{"A":"swim","B":"swims","C":"to swim","D":"swimming"},"answer":"D","accept":[],"point":"be good at + doing","why":"at 是介词，介词后面接 doing，所以是 swimming。","know":"介词后一律 doing：be good at doing / be interested in doing / thank you for doing。"},{"id":"W01","topic":"wordfam","tag":"word_family","tag_cn":"词族变形","type":"choice","stem":"She is a ____ girl. She checks her answers twice.","options":{"A":"care","B":"careful","C":"carefully","D":"cares"},"answer":"B","accept":[],"point":"形容词修饰名词","why":"空在 a 和 girl 之间，是修饰名词 girl 的形容词位，用 careful。","know":"名前用形容词：a careful girl；动词后用副词：checks carefully。"},{"id":"W02","topic":"wordfam","tag":"word_family","tag_cn":"词族变形","type":"fill","stem":"Please listen to the teacher ____ (careful).","options":null,"answer":"carefully","accept":["carefully"],"point":"副词修饰动词","why":"listen 是动词，修饰动词要用副词 carefully。","know":"形容词 + ly 变副词：careful→carefully, quick→quickly, slow→slowly；good 的副词是 well。"},{"id":"W03","topic":"wordfam","tag":"word_family","tag_cn":"词族变形","type":"choice","stem":"The children played ____ in the park.","options":{"A":"happy","B":"happily","C":"happiness","D":"happier"},"answer":"B","accept":[],"point":"y 变 i 加 ly","why":"play 是动词，要用副词；happy 变副词是 happily（y 变 i 再加 ly）。","know":"辅音字母 + y 结尾的形容词变副词：happy→happily, easy→easily, busy→busily。"},{"id":"W04","topic":"wordfam","tag":"word_family","tag_cn":"词族变形","type":"choice","stem":"He is a famous ____. He sings very well.","options":{"A":"sing","B":"sings","C":"singer","D":"singing"},"answer":"C","accept":[],"point":"动词变名词（-er）","why":"a famous 后面要跟表示人的名词，sing 加 -er 变成 singer（歌手）。","know":"动词 +er 表示做这件事的人：sing→singer, teach→teacher, write→writer, visit→visitor。"},{"id":"W05","topic":"wordfam","tag":"word_family","tag_cn":"词族变形","type":"choice","stem":"There are many ____ in the park on Sunday.","options":{"A":"visit","B":"visits","C":"visitors","D":"visiting"},"answer":"C","accept":[],"point":"名词复数 + 词族","why":"many 后面跟可数名词复数；visit 变指人的名词是 visitor，复数是 visitors。","know":"many + 可数名词复数；people 本身就是复数，不再加 s。"},{"id":"W06","topic":"wordfam","tag":"word_family","tag_cn":"词族变形","type":"choice","stem":"This is a ____ book. I learned a lot from it.","options":{"A":"use","B":"useful","C":"usefully","D":"uses"},"answer":"B","accept":[],"point":"名词变形容词（-ful）","why":"空修饰名词 book，要用形容词；use 加 -ful 变成 useful（有用的）。","know":"-ful 后缀：use→useful, help→helpful, care→careful；-less 表示「没有」：useless, hopeless。"},{"id":"O01","topic":"ordinal","tag":"ordinal","tag_cn":"序数词","type":"fill","stem":"My birthday is on the ____ (five) of May.","options":null,"answer":"fifth","accept":["fifth"],"point":"日期用 the + 序数词","why":"日期里的「几号」用序数词；five 的序数词是 fifth（ve 变 f 再加 th）。","know":"fifth, twelfth 都是 ve 变 f 再加 th；eighth 只加 h。"},{"id":"O02","topic":"ordinal","tag":"ordinal","tag_cn":"序数词","type":"choice","stem":"December is the ____ month of the year.","options":{"A":"twelve","B":"twelveth","C":"twelfth","D":"twelvth"},"answer":"C","accept":[],"point":"第十二 = twelfth","why":"表示「第几个」用序数词；twelve 变 twelfth，ve 要变成 f 再加 th。","know":"口诀：一二三特殊（first/second/third），八加 h（eighth），九去 e（ninth），ve 变 f（fifth/twelfth），几十改 y 为 ie（twentieth）。"},{"id":"O03","topic":"ordinal","tag":"ordinal","tag_cn":"序数词","type":"choice","stem":"My classroom is on the ____ floor.","options":{"A":"three","B":"third","C":"threeth","D":"thirds"},"answer":"B","accept":[],"point":"楼层用序数词","why":"「第几层」用序数词，three 的序数词是 third。","know":"on the third floor = 在三楼；序数词前一般要加 the。"},{"id":"O04","topic":"ordinal","tag":"ordinal","tag_cn":"序数词","type":"fill","stem":"Today is the ____ (one) day of the new term.","options":null,"answer":"first","accept":["first"],"point":"第一 = first","why":"the ... day of 表示「第几天」，用序数词；one 的序数词是 first。","know":"first / second / third 是不规则序数词，必须单独记，不能写 oneth、twoth。"},{"id":"O05","topic":"ordinal","tag":"ordinal","tag_cn":"序数词","type":"choice","stem":"She came ____ in the running race.","options":{"A":"two","B":"second","C":"twoth","D":"secondly"},"answer":"B","accept":[],"point":"名次用序数词","why":"「第几名」用序数词，two 的序数词是 second。","know":"come first / come second = 得第一 / 第二；这里序数词前不加 the。"},{"id":"O06","topic":"ordinal","tag":"ordinal","tag_cn":"序数词","type":"fill","stem":"Teachers' Day is on the ____ (ten) of September.","options":null,"answer":"tenth","accept":["tenth"],"point":"整十序数词","why":"ten 的序数词是 tenth，直接加 th。","know":"整十：twenty→twentieth, thirty→thirtieth（y 变 ie 再加 th）；十位+个位只变个位：twenty-first。"},{"id":"Q01","topic":"whq","tag":"wh_word","tag_cn":"特殊疑问句","type":"choice","stem":"— ____ did you go last Sunday?\n— I went to the park.","options":{"A":"What","B":"Where","C":"When","D":"Who"},"answer":"B","accept":[],"point":"疑问词看答句","why":"答句是地点 the park，问地点用 Where。","know":"What 问事物，Where 问地点，When 问时间，Who 问人，How many 问数量。"},{"id":"Q02","topic":"whq","tag":"wh_word","tag_cn":"特殊疑问句","type":"choice","stem":"— ____ is your English teacher?\n— Miss Li.","options":{"A":"What","B":"Where","C":"Who","D":"When"},"answer":"C","accept":[],"point":"Who 问人","why":"答句是人名 Miss Li，问人用 Who；Who 作主语时后面直接跟 is。","know":"Who is ...? 问人；Where is ...? 问地点。两个都读得快，别混。"},{"id":"Q03","topic":"whq","tag":"wh_word","tag_cn":"特殊疑问句","type":"choice","stem":"— ____ books do you have?\n— About twenty.","options":{"A":"How much","B":"How many","C":"How long","D":"How old"},"answer":"B","accept":[],"point":"How many + 复数名词","why":"books 是可数名词复数，答句是数量，用 How many。","know":"How many + 可数复数；How much + 不可数（水、钱）；How long 问时长/长度；How old 问年龄。"},{"id":"Q04","topic":"whq","tag":"wh_word","tag_cn":"特殊疑问句","type":"choice","stem":"— ____ is it today?\n— It's Monday.","options":{"A":"What day","B":"What date","C":"When","D":"How"},"answer":"A","accept":[],"point":"What day 问星期","why":"答句 Monday 是星期，问星期用 What day；What date 问的是几月几日。","know":"What day is it today? → It's Monday. / What's the date today? → It's May 5th."},{"id":"Q05","topic":"whq","tag":"wh_word","tag_cn":"特殊疑问句","type":"choice","stem":"— ____ do you go to school?\n— By bus.","options":{"A":"Where","B":"When","C":"How","D":"What"},"answer":"C","accept":[],"point":"How 问方式","why":"答句 By bus 是交通方式，问方式用 How。","know":"How do you ...? 问方式；By + 交通工具（by bus / by bike / on foot 是特例）。"},{"id":"Q06","topic":"whq","tag":"wh_word","tag_cn":"特殊疑问句","type":"choice","stem":"— ____ is your birthday?\n— It's on the 5th of May.","options":{"A":"When","B":"What","C":"Where","D":"Who"},"answer":"A","accept":[],"point":"When 问时间","why":"答句是日期，问时间用 When；用 What 就不能同时问出整句日期。","know":"When is your birthday? 答 It's on ...；问具体几点用 What time。"},{"id":"S01","topic":"sva","tag":"indef_pron","tag_cn":"主谓一致","type":"choice","stem":"Everyone in our class ____ the new teacher.","options":{"A":"like","B":"likes","C":"are like","D":"liking"},"answer":"B","accept":[],"point":"不定代词作主语用单数谓语","why":"everyone 虽然指很多人，但语法上是单数，谓语用 likes。","know":"everyone / everybody / someone / nobody / something 作主语，谓语一律用单数。"},{"id":"S02","topic":"sva","tag":"indef_pron","tag_cn":"主谓一致","type":"choice","stem":"There is ____ in the box. It's empty.","options":{"A":"something","B":"anything","C":"nothing","D":"everything"},"answer":"C","accept":[],"point":"不定代词的意义","why":"后半句 It's empty 说明盒子里什么都没有，用 nothing。","know":"something 用于肯定句，anything 用于否定/疑问，nothing = not anything。形容词后置：something new。"},{"id":"S03","topic":"sva","tag":"indef_pron","tag_cn":"主谓一致","type":"fill","stem":"Everybody ____ (want) to be happy.","options":null,"answer":"wants","accept":["wants"],"point":"everybody 看作单数","why":"everybody 是单数概念，一般现在时谓语要加 s，用 wants。","know":"everybody = every person，后面跟 is / has / likes 这类单数形式。"},{"id":"S04","topic":"sva","tag":"sva","tag_cn":"主谓一致","type":"choice","stem":"Each student ____ a dictionary in the exam.","options":{"A":"have","B":"has","C":"are having","D":"having"},"answer":"B","accept":[],"point":"each + 单数名词用单数谓语","why":"each student 是「每一个学生」，看作单数，谓语用 has。","know":"each / every + 单数名词 → 单数谓语；all the students → 复数谓语。"},{"id":"S05","topic":"sva","tag":"sva","tag_cn":"主谓一致","type":"fill","stem":"There ____ (be) some milk in the glass.","options":null,"answer":"is","accept":["is"],"point":"There be 就近 + 不可数","why":"milk 是不可数名词，There be 用 is。","know":"There is + 不可数/单数；There are + 复数。两个名词并列时，看最靠近 be 的那个。"},{"id":"S06","topic":"sva","tag":"indef_pron","tag_cn":"主谓一致","type":"choice","stem":"Nobody ____ the answer to this question.","options":{"A":"know","B":"knows","C":"are knowing","D":"knowing"},"answer":"B","accept":[],"point":"nobody 用单数谓语","why":"nobody 是否定意义的单数代词，谓语用 knows。","know":"nobody / no one 作主语用单数谓语，而且句子本身已是否定，不再加 not。"}]}</script>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ================= 0. 常量与工具 ================= */
+  var BANK = JSON.parse(document.getElementById('bank').textContent);
+  var ITEMS = BANK.items.slice();
+  var TOPICS = BANK.meta.topics.slice();
+  var BY_ID = {};
+  ITEMS.forEach(function(it){ BY_ID[it.id] = it; });
+
+  var DB_KEY = 'yl6_platform_v1';   // localStorage 键名：改这里会读不到旧数据
+  var ACCESS_CODE = 'LY6A';         // 访问码：老师可以改这一行
+  var Q_SECONDS = 40;               // 每题倒计时（秒）
+  var PK_SECONDS = 60;              // PK 总时长（秒）
+
+  function $(s){ return document.querySelector(s); }
+  function $$(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); }
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];
+    });
+  }
+  var toastT;
+  function toast(msg){
+    var t = $('#toast'); t.textContent = msg; t.classList.add('on');
+    clearTimeout(toastT); toastT = setTimeout(function(){ t.classList.remove('on'); }, 2300);
+  }
+  function fmt(sec){
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+  function pct(a, b){ return b ? Math.round(a / b * 100) : 0; }
+
+  /* ================= 1. 判题核心（纯函数，便于单独测） ================= */
+  var CORE = {
+    norm: function(s){
+      return String(s == null ? '' : s).toLowerCase()
+        .replace(/[‘’]/g, "'").replace(/\s+/g, ' ').trim().replace(/[.。\s]+$/, '');
+    },
+    isChoice: function(it){ return !!(it.options && Object.keys(it.options).length); },
+    check: function(it, ans){
+      if (CORE.isChoice(it)) return String(ans).toUpperCase() === String(it.answer).toUpperCase();
+      var pool = [it.answer].concat(it.accept || []).map(CORE.norm);
+      var v = CORE.norm(ans);
+      return v !== '' && pool.indexOf(v) !== -1;
+    },
+    // 把各种可能的题库格式统一成内部结构
+    normalize: function(raw, fallbackTopic){
+      if (!raw || typeof raw !== 'object') return null;
+      var it = {};
+      it.id = raw.id || ('U' + Math.random().toString(36).slice(2, 8));
+      it.topic = raw.topic || fallbackTopic || 'imported';
+      it.tag = raw.tag || it.topic;
+      it.tag_cn = raw.tag_cn || raw.point || '导入题';
+      it.type = raw.type || ((raw.options && (Array.isArray(raw.options) ? raw.options.length : Object.keys(raw.options).length)) ? 'choice' : 'fill');
+      it.stem = String(raw.stem || raw.question || '').trim();
+      var opts = raw.options;
+      if (Array.isArray(opts)){                    // 数组形式 → A/B/C/D
+        var o = {}; ['A','B','C','D'].forEach(function(k, i){ if (opts[i] != null) o[k] = String(opts[i]); });
+        opts = o;
+      }
+      it.options = (opts && Object.keys(opts).length) ? opts : null;
+      it.answer = String(raw.answer != null ? raw.answer : '').trim();
+      it.accept = raw.accept || (raw.answers || []);
+      it.point = raw.point || raw.tag_cn || '';
+      it.why = raw.why || raw.explain || '';
+      it.know = raw.know || raw.knowledge || raw.point || '';
+      if (!it.stem || !it.answer) return null;
+      return it;
+    },
+    // 从文本里解析出题目数组
+    parse: function(text, fallbackTopic){
+      var data = JSON.parse(text);
+      var arr = Array.isArray(data) ? data
+              : (data.items || data.variants || data.questions || data.bank || null);
+      if (!arr || !arr.length) throw new Error('没找到 items / variants 数组');
+      return arr.map(function(x){ return CORE.normalize(x, fallbackTopic); }).filter(Boolean);
+    }
+  };
+
+  /* ================= 2. 本地存储 ================= */
+  var DB = { version: 1, users: {}, current: null };
+
+  function loadDB(){
+    try{
+      var raw = localStorage.getItem(DB_KEY);
+      if (raw){
+        var d = JSON.parse(raw);
+        if (d && d.users){ DB = d; }
+      }
+    }catch(e){ toast('本机存储不可用，这次记录不会保存'); }
+  }
+  function saveDB(){
+    try{ localStorage.setItem(DB_KEY, JSON.stringify(DB)); }
+    catch(e){ toast('存不进去：浏览器把本地存储关掉了'); }
+  }
+  function userKey(cls, name){ return cls + '|' + name; }
+  function me(){ return DB.current ? DB.users[DB.current] : null; }
+
+  // 新建一个用户档案
+  function makeUser(cls, name){
+    return {
+      cls: cls, name: name, created: Date.now(),
+      stats: { answered: 0, correct: 0, seconds: 0 },
+      wrong: {},          // 错题本：id → { n, my, at }
+      history: [],        // 做题流水
+      pk: { best: 0, plays: 0 }
+    };
+  }
+
+  /* ================= 3. 登录 ================= */
+  function enterApp(){
+    $('#login').hidden = true;
+    $('#app').hidden = false;
+    var u = me();
+    if (!u) return;
+    $('#uName').textContent = u.name;
+    $('#uCls').textContent = u.cls;
+    $('#railName').textContent = u.name;
+    $('#railCls').textContent = u.cls;
+    renderPractice();
+    renderWrong();
+    renderMe();
+    renderBoard();
+  }
+
+  $('#loginForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = $('#lgName').value.trim();
+    var cls = $('#lgClass').value;
+    var code = $('#lgCode').value.trim().toUpperCase();
+    if (!name){ toast('昵称还没填'); $('#lgName').focus(); return; }
+    if (code !== ACCESS_CODE){ toast('访问码不对，问一下老师'); $('#lgCode').select(); return; }
+    var key = userKey(cls, name);
+    if (!DB.users[key]) DB.users[key] = makeUser(cls, name);
+    DB.current = key;
+    saveDB();
+    enterApp();
+    toast('欢迎回来，' + name);
+  });
+  // 登录框里的回车不要漏到后面的题目操作上
+  $('#login').addEventListener('keydown', function(e){ e.stopPropagation(); }, true);
+
+  $('#logoutBtn').addEventListener('click', function(){
+    DB.current = null; saveDB();
+    $('#app').hidden = true;
+    $('#login').hidden = false;
+    $('#lgName').value = ''; $('#lgCode').value = '';
+    setTimeout(function(){ $('#lgName').focus(); }, 40);
+  });
+
+  /* ================= 4. 视图切换 ================= */
+  var VIEW_TITLE = {
+    practice: ['专题刷题', '选一个考点开始，做完自动进错题本'],
+    quiz:     ['正在做题', '答完可以展开解析，答错自动进错题本'],
+    wrong:    ['错题整理', '按考点分组，答对一次就移出'],
+    variant:  ['举一反三', '同考点的变式题，练到会为止'],
+    handbook: ['语法手册', '公式、例句、易错点，点开就看'],
+    board:    ['排行榜', '本机数据排行，可发起 PK 挑战'],
+    me:       ['个人中心', '做题总数、正确率、历史记录']
+  };
+
+  function show(view){
+    $$('.view').forEach(function(v){ v.classList.toggle('on', v.id === 'v-' + view); });
+    $$('.nav-item, .tabbar button').forEach(function(b){
+      if (b.dataset.view) b.setAttribute('aria-current', String(b.dataset.view === view));
+    });
+    var t = VIEW_TITLE[view] || ['', ''];
+    $('#pageTitle').textContent = t[0];
+    $('#pageSub').textContent = t[1];
+    if (view === 'wrong') renderWrong();
+    if (view === 'me') renderMe();
+    if (view === 'board') renderBoard();
+    window.scrollTo(0, 0);
+  }
+
+  $$('.nav-item, .tabbar button').forEach(function(b){
+    b.addEventListener('click', function(){ if (b.dataset.view) show(b.dataset.view); });
+  });
+
+  /* ================= 5. 专题刷题首页 ================= */
+  function topicStat(id){
+    var u = me(); if (!u) return { n: 0, ok: 0 };
+    var n = 0, ok = 0;
+    u.history.forEach(function(h){ if (h.topic === id){ n++; if (h.ok) ok++; } });
+    return { n: n, ok: ok };
+  }
+  function itemsOfTopic(id){
+    if (id === 'pk') return ITEMS.slice();
+    if (id === 'imported') return IMPORTED.slice();
+    return ITEMS.filter(function(it){ return it.topic === id; });
+  }
+
+  var IMPORTED = [];   // 用户导入的题库
+
+  function renderPractice(){
+    $('#bankInfo').textContent = '内置 ' + ITEMS.length + ' 题 · ' + TOPICS.length + ' 个考点' +
+      (IMPORTED.length ? ' · 已导入 ' + IMPORTED.length + ' 题' : '');
+    var html = TOPICS.map(function(t, i){
+      var n = itemsOfTopic(t.id).length;
+      var st = topicStat(t.id);
+      var rate = st.n ? pct(st.ok, st.n) : null;
+      return '<button class="topic" data-topic="' + t.id + '">' +
+        '<span class="tno">' + ('0' + (i + 1)).slice(-2) + ' · ' + n + ' 题</span>' +
+        '<h4>' + esc(t.name) + '</h4>' +
+        '<p>' + esc(t.desc) + '</p>' +
+        '<div class="prog"><i style="width:' + (rate == null ? 0 : rate) + '%"></i></div>' +
+        '<div class="meta"><span>' + (st.n ? ('做过 ' + st.n + ' 题') : '还没做过') + '</span>' +
+        '<span class="rate">' + (rate == null ? '—' : rate + '%') + '</span></div>' +
+        '</button>';
+    }).join('');
+    if (IMPORTED.length){
+      html += '<button class="topic" data-topic="imported"><span class="tno">09 · 导入</span>' +
+              '<h4>我的题库</h4><p>从 Hermes 粘贴进来的题目</p>' +
+              '<div class="prog"><i style="width:0"></i></div>' +
+              '<div class="meta"><span>共 ' + IMPORTED.length + ' 题</span><span class="rate">开始</span></div></button>';
+    }
+    $('#topicGrid').innerHTML = html;
+    $$('#topicGrid .topic').forEach(function(b){
+      b.addEventListener('click', function(){ startTopic(b.dataset.topic); });
+    });
+  }
+
+  function startTopic(id){
+    var items = itemsOfTopic(id);
+    if (!items.length){ toast('这个考点还没有题'); return; }
+    var t = TOPICS.filter(function(x){ return x.id === id; })[0];
+    startSession('topic', items, t ? t.name : '我的题库');
+  }
+
+  /* ================= 6. 做题会话 ================= */
+  var SESS = null;      // 当前会话
+  var timerId = null;   // 倒计时句柄
+
+  function cur(){ return SESS ? SESS.items[SESS.idx] : null; }
+
+  function startSession(mode, items, title){
+    stopTimer();
+    SESS = {
+      mode: mode, title: title,
+      items: items.slice(), idx: 0,
+      picked: null, answered: false,
+      marks: [], start: Date.now(),
+      qLeft: Q_SECONDS, pkLeft: PK_SECONDS, score: 0, streak: 0,
+      recorded: false, done: false
+    };
+    $('#result').hidden = true;
+    $('#qCard').hidden = false;
+    show('quiz');
+    renderQuestion();
+    startTimer();
+  }
+
+  function startTimer(){
+    stopTimer();
+    timerId = setInterval(function(){
+      if (!SESS || SESS.done) return;
+      if (SESS.mode === 'pk'){
+        SESS.pkLeft--;
+        paintTimer();
+        if (SESS.pkLeft <= 0){ finishSession(); }
+        return;
+      }
+      if (SESS.answered) return;           // 已作答就停表，方便慢慢看解析
+      SESS.qLeft--;
+      paintTimer();
+      if (SESS.qLeft <= 0){ submit(true); } // 时间到自动判错
+    }, 1000);
+    paintTimer();
+  }
+  function stopTimer(){ if (timerId){ clearInterval(timerId); timerId = null; } }
+
+  function paintTimer(){
+    if (!SESS) return;
+    var left = SESS.mode === 'pk' ? SESS.pkLeft : SESS.qLeft;
+    var el = $('#qTimer');
+    el.textContent = (SESS.mode === 'pk' ? 'PK ' : '') + fmt(left);
+    el.classList.toggle('warn', left <= 10);
+  }
+
+  function renderQuestion(){
+    var it = cur();
+    if (!it){ finishSession(); return; }
+    SESS.picked = null; SESS.answered = false;
+    SESS.qLeft = Q_SECONDS;
+
+    $('#qCrumb').textContent = SESS.title + ' · 第 ' + (SESS.idx + 1) + '/' + SESS.items.length + ' 题';
+    $('#qTag').textContent = it.tag_cn || '考点';
+    $('#qType').textContent = CORE.isChoice(it) ? '单项选择' : '适当形式填空';
+    $('#qBar').style.width = Math.round(SESS.idx / SESS.items.length * 100) + '%';
+    $('#qStem').textContent = it.stem.replace(/_{2,}/g, '______');
+
+    var box = $('#qOpts');
+    box.innerHTML = '';
+    $('#kb').hidden = true;
+    $('#kbBtn').hidden = true;
+
+    if (CORE.isChoice(it)){
+      Object.keys(it.options).forEach(function(k){
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'opt';
+        b.dataset.k = k;
+        b.setAttribute('role', 'radio');
+        b.setAttribute('aria-checked', 'false');
+        b.innerHTML = '<span class="k">' + esc(k) + '</span><span>' + esc(it.options[k]) + '</span>';
+        b.addEventListener('click', function(){ pick(k); });
+        box.appendChild(b);
+      });
+    } else {
+      var row = document.createElement('div');
+      row.className = 'fillrow';
+      row.innerHTML = '<input id="fillInput" autocomplete="off" autocapitalize="off" ' +
+                      'spellcheck="false" placeholder="在这里写答案"><span class="note">只写一个词形</span>';
+      box.appendChild(row);
+      var inp = $('#fillInput');
+      inp.addEventListener('keydown', function(e){
+        if (e.key === 'Enter'){ e.preventDefault(); if (SESS.answered) nextQ(); else submit(); }
+      });
+      // 触屏设备默认弹出虚拟键盘，平板上更好按
+      if (window.matchMedia && window.matchMedia('(pointer:coarse)').matches){
+        $('#kb').hidden = false; buildKeyboard();
+      }
+      $('#kbBtn').hidden = false;
+    }
+
+    $('#exp').open = false;
+    $('#verdict').textContent = ''; $('#verdict').className = 'verdict';
+    $('#submitBtn').hidden = false; $('#submitBtn').disabled = false;
+    $('#nextBtn').hidden = true;
+    paintTimer();
+  }
+
+  function pick(k){
+    if (!SESS || SESS.answered) return;
+    SESS.picked = k;
+    $$('#qOpts .opt').forEach(function(b){ b.setAttribute('aria-checked', String(b.dataset.k === k)); });
+  }
+
+  function submit(auto){
+    if (!SESS || SESS.answered) return;
+    var it = cur();
+    var ans = CORE.isChoice(it) ? SESS.picked : ($('#fillInput') ? $('#fillInput').value : '');
+    if (ans === null || ans === undefined) ans = '';
+    if (!auto && String(ans).trim() === ''){ toast('先选一个答案，或把词填进去'); return; }
+
+    var ok = CORE.check(it, ans);
+    SESS.answered = true;
+
+    // 标记选项对错
+    if (CORE.isChoice(it)){
+      $$('#qOpts .opt').forEach(function(b){
+        b.disabled = true;
+        if (b.dataset.k === it.answer) b.classList.add('good');
+        else if (b.dataset.k === SESS.picked) b.classList.add('bad');
+      });
+    } else {
+      var inp = $('#fillInput');
+      if (inp){ inp.disabled = true; inp.classList.add(ok ? 'good' : 'bad'); }
+    }
+
+    // 填解析
+    $('#verdict').textContent = ok ? '答对了' : '答错了，看看为什么';
+    $('#verdict').className = 'verdict ' + (ok ? 'ok' : 'no');
+    $('#xAns').textContent = CORE.isChoice(it)
+      ? (it.answer + ' · ' + it.options[it.answer]) : it.answer;
+    $('#xAns').className = 'big' + (ok ? '' : ' no');
+    $('#xPoint').textContent = it.point || '';
+    $('#xWhy').textContent = it.why || '';
+    $('#xKnow').textContent = it.know || it.point || '';
+    $('#exp').open = !ok;   // 答错自动展开，答对让它自己收着
+
+    $('#submitBtn').hidden = true;
+    $('#nextBtn').hidden = false;
+    $('#nextBtn').textContent = (SESS.idx + 1 < SESS.items.length) ? '下一题 →' : '看结果 →';
+
+    // 记一笔
+    SESS.marks.push({ id: it.id, ok: ok, my: String(ans || ''), topic: it.topic });
+    if (SESS.mode === 'pk'){
+      if (ok){ SESS.streak++; SESS.score += 10 + Math.max(0, SESS.streak - 1) * 2; }
+      else { SESS.streak = 0; }
+      // PK 里不细看解析，1 秒后自动下一题，保持节奏（先记住这一局的引用，防止中途换局）
+      var thisSess = SESS;
+      setTimeout(function(){ if (SESS === thisSess && !SESS.done) nextQ(); }, 950);
+    }
+  }
+
+  function nextQ(){
+    if (!SESS) return;
+    if (SESS.idx + 1 < SESS.items.length){
+      SESS.idx++; renderQuestion();
+    } else if (SESS.mode === 'pk'){
+      // PK 是限时的，题不够就重新洗一遍
+      SESS.items = shuffle(SESS.items); SESS.idx = 0; renderQuestion();
+    } else {
+      finishSession();
+    }
+  }
+
+  function shuffle(a){
+    var b = a.slice();
+    for (var i = b.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = b[i]; b[i] = b[j]; b[j] = t;
+    }
+    return b;
+  }
+
+  /* ================= 7. 结算 ================= */
+  function finishSession(){
+    if (!SESS || SESS.done) return;
+    SESS.done = true;
+    stopTimer();
+
+    var n = SESS.marks.length;
+    var ok = SESS.marks.filter(function(m){ return m.ok; }).length;
+    var secs = Math.max(1, Math.round((Date.now() - SESS.start) / 1000));
+
+    // 写进用户档案
+    var u = me();
+    if (u && n){
+      u.stats.answered += n;
+      u.stats.correct += ok;
+      u.stats.seconds += secs;
+      SESS.marks.forEach(function(m){
+        u.history.push({ id: m.id, ok: m.ok, my: m.my, at: Date.now(), topic: m.topic });
+        if (m.ok){ delete u.wrong[m.id]; }
+        else {
+          var w = u.wrong[m.id] || { n: 0 };
+          w.n += 1; w.my = m.my; w.at = Date.now();
+          u.wrong[m.id] = w;
+        }
+      });
+      if (u.history.length > 400) u.history = u.history.slice(-400);
+      if (SESS.mode === 'pk'){
+        u.pk.plays += 1;
+        u.pk.best = Math.max(u.pk.best || 0, SESS.score);
+      }
+      saveDB();
+    }
+
+    // 结果面板
+    $('#qCard').hidden = true;
+    $('#result').hidden = false;
+    var rate = pct(ok, n);
+    $('#rBig').textContent = SESS.mode === 'pk' ? (SESS.score + ' 分') : (rate + '%');
+    $('#rLbl').textContent = SESS.mode === 'pk' ? 'PK 得分（60 秒）' : '正确率';
+    var stars = rate === 100 ? 3 : (rate >= 80 ? 2 : (rate >= 60 ? 1 : 0));
+    $('#rStars').innerHTML = [0,1,2].map(function(i){
+      return i < stars ? '★' : '<span class="off">★</span>';
+    }).join('');
+    $('#rExtra').textContent = SESS.mode === 'pk'
+      ? ('答对 ' + ok + ' 题 · 用时 ' + fmt(secs) + ' · 个人最好 ' + (me() ? me().pk.best : 0) + ' 分')
+      : ('答对 ' + ok + '/' + n + ' 题 · 用时 ' + fmt(secs) + (ok < n ? ' · 错的题已进错题本' : ' · 全对'));
+
+    renderPractice(); renderWrong(); renderMe(); renderBoard();
+  }
+
+  $('#quitBtn').addEventListener('click', function(){
+    if (SESS && SESS.marks.length && !SESS.done){
+      // 中途退出也算一次记录，但只记已答的
+      finishSession();
+      show('practice');
+      return;
+    }
+    if (SESS){ SESS.done = true; stopTimer(); }
+    show('practice');
+  });
+  $('#submitBtn').addEventListener('click', function(){ submit(false); });
+  $('#nextBtn').addEventListener('click', nextQ);
+  $('#rHome').addEventListener('click', function(){ show('practice'); });
+  $('#rAgain').addEventListener('click', function(){
+    var mode = SESS.mode, title = SESS.title;
+    startSession(mode, shuffle(SESS.items), title);
+  });
+  $('#rRedoWrong').addEventListener('click', function(){
+    var ids = SESS.marks.filter(function(m){ return !m.ok; }).map(function(m){ return m.id; });
+    var items = ids.map(function(id){ return BY_ID[id]; }).filter(Boolean);
+    if (!items.length){ toast('这一组没有错题'); return; }
+    startSession('wrong', items, '重做错题');
+  });
+
+  /* ================= 8. 虚拟英文键盘 ================= */
+  function buildKeyboard(){
+    var kb = $('#kb');
+    if (!kb || kb.dataset.built) return;
+    var rows = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
+    var html = '';
+    rows.forEach(function(r){
+      html += '<div class="krow">';
+      for (var i = 0; i < r.length; i++){
+        html += '<button type="button" class="key" data-ch="' + r[i] + '">' + r[i] + '</button>';
+      }
+      html += '</div>';
+    });
+    html += '<div class="krow">' +
+            '<button type="button" class="key wide" data-ch=" ">空格</button>' +
+            '<button type="button" class="key" data-act="back">⌫</button>' +
+            '<button type="button" class="key wide" data-act="clear">清空</button>' +
+            '</div>';
+    kb.innerHTML = html;
+    kb.dataset.built = '1';
+
+    kb.addEventListener('click', function(e){
+      var b = e.target.closest('button');
+      if (!b) return;
+      var inp = $('#fillInput');
+      if (!inp || inp.disabled) return;
+      if (b.dataset.ch !== undefined){ insertText(inp, b.dataset.ch); }
+      else if (b.dataset.act === 'back'){
+        var s = inp.selectionStart || 0, e2 = inp.selectionEnd || 0;
+        if (s === e2 && s > 0){ s -= 1; }
+        inp.value = inp.value.slice(0, s) + inp.value.slice(e2);
+        inp.setSelectionRange(s, s); inp.focus();
+      } else if (b.dataset.act === 'clear'){
+        inp.value = ''; inp.focus();
+      }
+    });
+  }
+  function insertText(inp, t){
+    var s = inp.selectionStart || 0, e = inp.selectionEnd || 0;
+    inp.value = inp.value.slice(0, s) + t + inp.value.slice(e);
+    var p = s + t.length;
+    inp.setSelectionRange(p, p);
+    inp.focus();
+  }
+  $('#kbBtn').addEventListener('click', function(){
+    var kb = $('#kb');
+    kb.hidden = !kb.hidden;
+    if (!kb.hidden){ buildKeyboard(); var f = $('#fillInput'); if (f) f.focus(); }
+  });
+
+  /* ================= 9. 错题整理 ================= */
+  function wrongItems(){
+    var u = me(); if (!u) return [];
+    return Object.keys(u.wrong).map(function(id){ return BY_ID[id]; }).filter(Boolean);
+  }
+
+  function renderWrong(){
+    var host = $('#wrongList');
+    var ws = wrongItems();
+    if (!ws.length){
+      host.innerHTML = '<div class="empty">还没有错题。<br>去「专题刷题」做一组，答错的会自动进来。</div>';
+      return;
+    }
+    // 按考点分组
+    var groups = {};
+    ws.forEach(function(it){
+      var k = it.topic || 'other';
+      (groups[k] = groups[k] || { name: it.tag_cn || '其他', items: [] }).items.push(it);
+    });
+    var html = '';
+    Object.keys(groups).forEach(function(k, i){
+      var g = groups[k];
+      html += '<details class="group"' + (i === 0 ? ' open' : '') + '>' +
+              '<summary>' + esc(g.name) + '<span class="n">' + g.items.length + ' 题</span></summary>' +
+              '<div class="gbody">';
+      g.items.forEach(function(it){
+        var w = me().wrong[it.id];
+        var my = CORE.isChoice(it) ? (w.my + (it.options[w.my] ? ' · ' + it.options[w.my] : '')) : w.my;
+        html += '<div class="eitem">' +
+          '<p class="q">' + esc(it.stem.replace(/_{2,}/g, '______')) + '</p>' +
+          '<div class="line">我写 <b>' + esc(my) + '</b>　正确 <i>' +
+            esc(CORE.isChoice(it) ? (it.answer + ' · ' + it.options[it.answer]) : it.answer) +
+          '</i>　错 ' + w.n + ' 次</div>' +
+          '<div class="why">' + esc(it.why || '') + '</div>' +
+        '</div>';
+      });
+      html += '<div class="acts"><button class="btn sm" data-redo="' + esc(k) + '" type="button">重做这一组</button></div>';
+      html += '</div></details>';
+    });
+    host.innerHTML = html;
+    $$('[data-redo]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var k = b.dataset.redo;
+        var items = wrongItems().filter(function(it){ return (it.topic || 'other') === k; });
+        startSession('wrong', items, '重做错题');
+      });
+    });
+  }
+
+  $('#redoAllWrong').addEventListener('click', function(){
+    var items = wrongItems();
+    if (!items.length){ toast('错题本是空的'); return; }
+    startSession('wrong', shuffle(items), '错题重做');
+  });
+
+  // 导出错题文本：直接下载 .txt，双击就能看
+  $('#exportWrong').addEventListener('click', function(){
+    var ws = wrongItems();
+    if (!ws.length){ toast('没有错题可导出'); return; }
+    var u = me();
+    var lines = [];
+    lines.push('六年级英语 错题整理');
+    lines.push(u.cls + '  ' + u.name + '  ' + new Date().toLocaleDateString('zh-CN'));
+    lines.push('共 ' + ws.length + ' 题');
+    lines.push('');
+    var n = 0;
+    ws.forEach(function(it){
+      n++;
+      var w = u.wrong[it.id];
+      var my = CORE.isChoice(it) ? (w.my + (it.options[w.my] ? ' ' + it.options[w.my] : '')) : w.my;
+      lines.push(n + '. ' + it.stem.replace(/_{2,}/g, '______'));
+      lines.push('   我写：' + my + '    正确：' +
+        (CORE.isChoice(it) ? it.answer + ' ' + it.options[it.answer] : it.answer) +
+        '    错 ' + w.n + ' 次');
+      lines.push('   考点：' + (it.point || ''));
+      lines.push('   为什么：' + (it.why || ''));
+      lines.push('   知识点：' + (it.know || ''));
+      lines.push('');
+    });
+    download('错题本-' + u.cls + '-' + u.name + '.txt', lines.join('\r\n'), 'text/plain');
+  });
+
+  /* ================= 10. 举一反三 ================= */
+  $('#doVariant').addEventListener('click', function(){
+    var txt = $('#variantJson').value.trim();
+    if (!txt){ toast('先把变式题 JSON 粘进来'); return; }
+    try{
+      var items = CORE.parse(txt, 'variant');
+      items.forEach(function(it){ it.tag_cn = it.tag_cn || '变式训练'; });
+      startSession('variant', items, '举一反三');
+    }catch(err){
+      toast('JSON 有问题：' + err.message);
+    }
+  });
+
+  // 示例：把内置题复制成变式格式，让老师看到该怎么粘
+  $('#sampleVariant').addEventListener('click', function(){
+    var base = ITEMS.filter(function(it){ return it.topic === 'past'; }).slice(0, 2);
+    var sample = {
+      schema: 'yl6.variant/1',
+      source_id: base[0].id,
+      tag: 'past_form',
+      variants: base.map(function(it, i){
+        return {
+          id: '样例' + (i + 1),
+          type: it.type,
+          stem: it.stem,
+          options: it.options,
+          answer: it.answer,
+          accept: it.accept,
+          tag_cn: '变式 · ' + it.tag_cn,
+          point: it.point,
+          why: it.why,
+          know: it.know
+        };
+      })
+    };
+    $('#variantJson').value = JSON.stringify(sample, null, 2);
+    toast('已填入示例，可以直接点「导入并开始训练」');
+  });
+
+  /* ================= 11. 导入题库 ================= */
+  $('#importBankBtn').addEventListener('click', function(){ $('#importBankBox').hidden = false; });
+  $('#cancelImportBank').addEventListener('click', function(){ $('#importBankBox').hidden = true; });
+  $('#doImportBank').addEventListener('click', function(){
+    var txt = $('#bankJson').value.trim();
+    if (!txt){ toast('先把 JSON 粘进来'); return; }
+    try{
+      var items = CORE.parse(txt, 'imported');
+      IMPORTED = items;
+      $('#importBankBox').hidden = true;
+      renderPractice();
+      toast('导入 ' + items.length + ' 题');
+      startSession('topic', items, '我的题库');
+    }catch(err){
+      toast('JSON 有问题：' + err.message);
+    }
+  });
+
+  /* ================= 12. PK 挑战 ================= */
+  $('#pkBtn').addEventListener('click', function(){
+    startSession('pk', shuffle(ITEMS), 'PK 挑战');
+  });
+
+  /* ================= 13. 排行榜 ================= */
+  var boardMode = 'acc';
+  $$('#boardSeg button').forEach(function(b){
+    b.addEventListener('click', function(){
+      boardMode = b.dataset.b;
+      $$('#boardSeg button').forEach(function(x){ x.setAttribute('aria-selected', String(x === b)); });
+      renderBoard();
+    });
+  });
+
+  function renderBoard(){
+    var rows = Object.keys(DB.users).map(function(k){ return DB.users[k]; });
+    if (!rows.length){
+      $('#boardBody').innerHTML = '<div class="empty">还没有人做题。<br>先登录再做一组，榜上就有名字了。</div>';
+      return;
+    }
+    if (boardMode === 'pk'){
+      rows = rows.filter(function(u){ return u.pk && u.pk.best > 0; })
+                 .sort(function(a, b){ return b.pk.best - a.pk.best; });
+      if (!rows.length){
+        $('#boardBody').innerHTML = '<div class="empty">还没有人完成 PK。<br>去「专题刷题」点右上角的 PK 挑战 60 秒。</div>';
+        return;
+      }
+      $('#boardBody').innerHTML = tableHTML(['#', '选手', '班级', 'PK 最高分', '次数'], rows.map(function(u, i){
+        return [rankCell(i), esc(u.name), esc(u.cls), '<span class="num">' + u.pk.best + '</span>',
+                '<span class="num">' + u.pk.plays + '</span>'];
+      }));
+      return;
+    }
+    if (boardMode === 'count'){
+      rows = rows.filter(function(u){ return u.stats.answered > 0; })
+                 .sort(function(a, b){ return b.stats.answered - a.stats.answered; });
+      $('#boardBody').innerHTML = tableHTML(['#', '选手', '班级', '完成题数', '正确率'],
+        rows.map(function(u, i){
+          return [rankCell(i), esc(u.name), esc(u.cls),
+                  '<span class="num">' + u.stats.answered + '</span>',
+                  '<span class="num">' + pct(u.stats.correct, u.stats.answered) + '%</span>'];
+        }));
+      return;
+    }
+    // 默认：正确率榜（至少做 5 题才上榜，避免一题全对霸榜）
+    rows = rows.filter(function(u){ return u.stats.answered >= 5; })
+               .sort(function(a, b){
+                 var ra = a.stats.correct / a.stats.answered, rb = b.stats.correct / b.stats.answered;
+                 if (rb !== ra) return rb - ra;
+                 return b.stats.answered - a.stats.answered;
+               });
+    if (!rows.length){
+      $('#boardBody').innerHTML = '<div class="empty">做满 5 题才会上正确率榜。<br>现在继续刷题吧。</div>';
+      return;
+    }
+    $('#boardBody').innerHTML = tableHTML(['#', '选手', '班级', '正确率', '题量'],
+      rows.map(function(u, i){
+        return [rankCell(i), esc(u.name), esc(u.cls),
+                '<span class="num">' + pct(u.stats.correct, u.stats.answered) + '%</span>',
+                '<span class="num">' + u.stats.answered + '</span>'];
+      }));
+  }
+  function rankCell(i){
+    return '<span class="rank' + (i < 3 ? ' top' : '') + '">' + (i + 1) + '</span>';
+  }
+  function tableHTML(head, rows){
+    return '<table><thead><tr>' + head.map(function(h){ return '<th>' + h + '</th>'; }).join('') +
+      '</tr></thead><tbody>' + rows.map(function(r){
+        return '<tr>' + r.map(function(c){ return '<td>' + c + '</td>'; }).join('') + '</tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  /* ================= 14. 个人中心 ================= */
+  function renderMe(){
+    var u = me(); if (!u) return;
+    var acc = pct(u.stats.correct, u.stats.answered);
+    var mins = Math.round(u.stats.seconds / 60);
+    var wrongN = Object.keys(u.wrong).length;
+    $('#meSub').textContent = u.cls + ' · ' + u.name + ' · 加入于 ' + new Date(u.created).toLocaleDateString('zh-CN');
+    $('#meStats').innerHTML = [
+      ['做题总数', u.stats.answered],
+      ['答对', u.stats.correct],
+      ['正确率', acc + '%'],
+      ['错题本', wrongN],
+      ['累计用时', mins + ' 分'],
+      ['PK 最高', (u.pk ? u.pk.best : 0) + ' 分']
+    ].map(function(x){
+      return '<div class="stat"><div class="v">' + x[1] + '</div><div class="k">' + x[0] + '</div></div>';
+    }).join('');
+
+    var hist = u.history.slice(-40).reverse();
+    if (!hist.length){
+      $('#meHist').innerHTML = '<div class="empty" style="border:0">还没有做题记录。</div>';
+      return;
+    }
+    $('#meHist').innerHTML = hist.map(function(h){
+      var it = BY_ID[h.id];
+      var name = it ? (it.tag_cn || it.topic) : '导入题';
+      var t = new Date(h.at);
+      return '<div class="hrow"><span class="ok ' + (h.ok ? 'y' : 'n') + '">' + (h.ok ? '对' : '错') + '</span>' +
+             '<span>' + esc(name) + '</span>' +
+             '<span class="t">' + (t.getMonth() + 1) + '/' + t.getDate() + ' ' +
+             ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2) + '</span></div>';
+    }).join('');
+  }
+
+  $('#exportAll').addEventListener('click', function(){
+    var u = me(); if (!u) return;
+    download('英语闯关数据-' + u.cls + '-' + u.name + '.json', JSON.stringify({
+      schema: 'yl6.report/1', user: u, exported_at: new Date().toISOString()
+    }, null, 2), 'application/json');
+  });
+
+  $('#clearMe').addEventListener('click', function(){
+    var b = this;
+    if (b.dataset.armed === '1'){
+      var key = DB.current;
+      if (key && DB.users[key]){
+        DB.users[key].stats = { answered: 0, correct: 0, seconds: 0 };
+        DB.users[key].wrong = {};
+        DB.users[key].history = [];
+        DB.users[key].pk = { best: 0, plays: 0 };
+        saveDB();
+      }
+      b.dataset.armed = ''; b.textContent = '清空我的记录';
+      renderMe(); renderPractice(); renderWrong(); renderBoard();
+      toast('已清空（账号和昵称保留）');
+      return;
+    }
+    b.dataset.armed = '1'; b.textContent = '再点一次确认清空';
+    setTimeout(function(){ if (b.dataset.armed === '1'){ b.dataset.armed = ''; b.textContent = '清空我的记录'; } }, 3500);
+  });
+
+  /* ================= 15. 下载工具 ================= */
+  function download(name, text, mime){
+    var blob = new Blob([text], { type: (mime || 'text/plain') + ';charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1500);
+    toast('已开始下载：' + name);
+  }
+
+  /* ================= 16. 键盘快捷键（电脑上更快） ================= */
+  document.addEventListener('keydown', function(e){
+    if (!$('#login').hidden) return;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+    if (!$('#v-quiz').classList.contains('on') || !SESS || SESS.done) return;
+    var k = e.key.toUpperCase();
+    if (!SESS.answered && /^[A-D]$/.test(k)){ pick(k); return; }
+    if (e.key === 'Enter'){
+      if (SESS.answered) nextQ(); else submit(false);
+    }
+  });
+
+  /* ================= 17. 语法手册内容 ================= */
+  var HANDBOOK = [
+    {
+      t: '一般过去时（动词过去式）', tag: 'past',
+      fml: '主语 + 动词过去式 + 过去时间状语',
+      ex: ['I watched TV last night.（watched = watch + ed）',
+           'He went to Beijing two days ago.（go → went，不规则）'],
+      body: '表示过去某个时间发生的动作或存在的状态。句子里通常会有 yesterday、last night、two days ago、just now、in 2020 这类时间标志。',
+      trap: 'stop → stopped（双写 p）、study → studied（y 变 i）、read 拼写不变但读音变 /red/。'
+    },
+    {
+      t: '过去时的否定与疑问', tag: 'did',
+      fml: "否定：didn't + 动词原形　　疑问：Did + 主语 + 动词原形?",
+      ex: ["He didn't go to school yesterday.", 'Did you see the film last night? — Yes, I did.'],
+      body: '助动词 did 已经把「过去」这件事说完了，所以后面的实义动词必须回到原形。答句也用 did。',
+      trap: "didn't went ✗、Did you saw ✗、答句 Yes, I was ✗ —— 这三处是最高频错。"
+    },
+    {
+      t: 'be 动词过去时 & be born', tag: 'be',
+      fml: 'I/he/she/it → was　　you/we/they → were　　出生：was/were born',
+      ex: ['There was a lot of rain last week.', 'I was born in 2015. / Where were you born?'],
+      body: 'be born 是固定搭配，born 前面必须有 be；出生是过去的事，所以只用 was 或 were。',
+      trap: 'did you born ✗、I born ✗、is born ✗。问句里也不能用 did。'
+    },
+    {
+      t: 'to do 还是 doing', tag: 'verb',
+      fml: 'want / hope / plan / learn / decide / need / would like + to do　　enjoy / finish / mind / practice / keep / be good at + doing',
+      ex: ['I want to play football.', 'She enjoys reading. / He is good at swimming.'],
+      body: '一个动词后面接什么，是固定搭配，靠记不靠推。介词（at / in / for / of）后面一律接 doing。',
+      trap: 'look forward to doing（这里的 to 是介词）；stop to do 是「停下来去做另一件事」，stop doing 是「停止正在做的事」。'
+    },
+    {
+      t: '词族变形（名 / 形 / 副 / 动）', tag: 'word',
+      fml: '名前用形容词　动后用副词　be 后用形容词　介词后用名词或 doing',
+      ex: ['She is a careful girl. / She checks her answers carefully.',
+           'He is a famous singer. / This is a useful book.'],
+      body: '同一词根在不同位置要换词性：care → careful（形）→ carefully（副）→ care（名/动）。',
+      trap: 'happy → happily（y 变 i）；good 的副词是 well，不是 goodly；useful 不是 usely。'
+    },
+    {
+      t: '序数词（日期、楼层、第几）', tag: 'ordinal',
+      fml: 'the + 序数词 + 名词　　日期：on the 5th of May',
+      ex: ['My birthday is on the fifth of May.', 'My classroom is on the third floor.'],
+      body: '表示顺序用序数词。1–3 特殊，4 起一般加 th，但有一批拼写要单独记。',
+      trap: 'fifth / twelfth（ve 变 f）、eighth（加 h）、ninth（去 e）、twentieth（y 变 ie）。写成 fiveth、twelveth、oneth 都错。'
+    },
+    {
+      t: '特殊疑问句', tag: 'wh',
+      fml: '疑问词 + 助动词/be + 主语 + 其他?',
+      ex: ['Where did you go last Sunday?', 'How many books do you have?'],
+      body: '先看答句问的是什么：人用 Who，地点 Where，时间 When，方式 How，数量 How many，年龄 How old。',
+      trap: 'How many 后必须跟可数名词复数；How much 问不可数或价钱；What day 问星期，What date 问日期。'
+    },
+    {
+      t: '主谓一致与不定代词', tag: 'sva',
+      fml: 'everyone / everybody / nobody / something 作主语 → 谓语用单数',
+      ex: ['Everyone in our class likes the new teacher.', 'Nobody knows the answer.'],
+      body: '不定代词虽然指很多人或物，但语法上是单数：is / has / likes，不是 are / have / like。',
+      trap: 'Everyone like ✗；There be 看后面最近的名词：There is some milk / There are two books。'
+    },
+    {
+      t: '时间介词 in / on / at', tag: 'prep',
+      fml: 'in + 年/月/季节　　on + 具体某天　　at + 时刻',
+      ex: ['in 2026, in May, in winter', 'on Monday, on the 5th of May, on Monday morning', 'at seven o’clock, at noon, at night'],
+      body: '范围越大用 in，具体到某一天用 on，具体到几点用 at。',
+      trap: 'on Monday morning（有 morning 也因为有 Monday 用 on）；at night / at noon 是固定搭配。'
+    },
+    {
+      t: '名词复数', tag: 'plural',
+      fml: '一般 +s　　以 s/x/ch/sh 结尾 +es　　辅音+y 变 i+es',
+      ex: ['books, boxes, watches', 'child → children, knife → knives, sheep → sheep'],
+      body: 'many / a lot of / two 后面跟可数名词复数；不可数名词（water, milk, rain）不加 s。',
+      trap: 'people 本身就是复数，不加 s；child 的复数是 children，不是 childs。'
+    }
+  ];
+
+  function renderHandbook(){
+    $('#handbook').innerHTML = HANDBOOK.map(function(h, i){
+      return '<details class="hb"' + (i === 0 ? ' open' : '') + '>' +
+        '<summary>' + esc(h.t) + '<span class="tag">' + esc(h.tag) + '</span></summary>' +
+        '<div class="hbbody">' +
+          '<div class="fml">' + esc(h.fml) + '</div>' +
+          '<p>' + esc(h.body) + '</p>' +
+          h.ex.map(function(e){ return '<p class="ex"><b>例：</b>' + esc(e) + '</p>'; }).join('') +
+          '<div class="trap">易错：' + esc(h.trap) + '</div>' +
+        '</div></details>';
+    }).join('');
+  }
+  renderHandbook();
+
+  /* ================= 18. 启动 ================= */
+  loadDB();
+  if (DB.current && DB.users[DB.current]){
+    enterApp();
+  } else {
+    $('#login').hidden = false;
+    setTimeout(function(){ $('#lgName').focus(); }, 60);
+  }
+
+  // 暴露给控制台，方便老师调试（不影响使用）
+  window.YL6 = { CORE: CORE, BANK: BANK, DB: DB, startSession: startSession };
+})();
+</script>
+</body>
+</html>
